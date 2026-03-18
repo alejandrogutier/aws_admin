@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --turbopack --yes)",
+      "Bash(mv .env /tmp/aws_admin_env_backup)",
+      "Bash(mv .claude /tmp/aws_admin_claude_backup)"
+    ]
+  }
+}
