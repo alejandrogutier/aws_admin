@@ -4,15 +4,20 @@ frontend:
     preBuild:
       commands:
         - npm ci
-        # Write env vars to .env.production.local so Next.js SSR can read them at runtime
-        # Amplify env vars are only available at build time, not in the Lambda runtime
-        - echo "ADMIN_AWS_REGION=$ADMIN_AWS_REGION" >> .env.production.local
-        - echo "ADMIN_AWS_ACCESS_KEY_ID=$ADMIN_AWS_ACCESS_KEY_ID" >> .env.production.local
-        - echo "ADMIN_AWS_SECRET_ACCESS_KEY=$ADMIN_AWS_SECRET_ACCESS_KEY" >> .env.production.local
-        - echo "ADMIN_AWS_USERNAME=$ADMIN_AWS_USERNAME" >> .env.production.local
+        # Write Amplify env vars to .env.production.local for Next.js SSR runtime
+        - |
+          echo "ADMIN_AWS_REGION=$ADMIN_AWS_REGION" > .env.production.local
+          echo "ADMIN_AWS_ACCESS_KEY_ID=$ADMIN_AWS_ACCESS_KEY_ID" >> .env.production.local
+          echo "ADMIN_AWS_SECRET_ACCESS_KEY=$ADMIN_AWS_SECRET_ACCESS_KEY" >> .env.production.local
+          echo "ADMIN_AWS_USERNAME=$ADMIN_AWS_USERNAME" >> .env.production.local
+          cat .env.production.local
     build:
       commands:
         - npm run build
+        # Copy env file into standalone directory so it's available at runtime
+        - cp .env.production.local .next/standalone/.env.production.local 2>/dev/null || true
+        - cp .env.production.local .next/standalone/.env.local 2>/dev/null || true
+        - cp .env.production.local .next/.env.production.local 2>/dev/null || true
   artifacts:
     baseDirectory: .next
     files:

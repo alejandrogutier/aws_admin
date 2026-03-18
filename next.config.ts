@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   serverExternalPackages: [
     "@aws-sdk/client-sts",
     "@aws-sdk/client-cost-explorer",
