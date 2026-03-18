@@ -7,7 +7,7 @@ import * as lambdaLib from "@/lib/aws/lambda";
 import * as rdsLib from "@/lib/aws/rds";
 import * as s3Lib from "@/lib/aws/s3";
 import * as ecsLib from "@/lib/aws/ecs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddAccountDialog } from "@/components/accounts/add-account-dialog";
 import { Building2, MapPin, Clock } from "lucide-react";
 import Link from "next/link";
-import { INSTANCE_STATE_COLORS } from "@/lib/constants";
+
 
 const statusStyles: Record<string, string> = {
   active: "bg-emerald-500/15 text-emerald-500 border-emerald-500/20",

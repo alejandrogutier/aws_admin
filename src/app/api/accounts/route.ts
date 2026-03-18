@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const accounts = await db.select().from(awsAccounts);
     return NextResponse.json({ data: accounts });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch accounts", code: 500 },
       { status: 500 }
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       .returning();
 
     return NextResponse.json({ data: account }, { status: 201 });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to create account", code: 500 },
       { status: 500 }

@@ -5,7 +5,6 @@ import { awsAccounts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { format, subMonths } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { CostTrendChart } from "@/components/dashboard/cost-trend-chart";
@@ -17,7 +16,7 @@ import * as rdsLib from "@/lib/aws/rds";
 import * as s3Lib from "@/lib/aws/s3";
 import * as iamLib from "@/lib/aws/iam";
 import { MapPin, Clock } from "lucide-react";
-import type { CostByService as CostByServiceType } from "@/types/aws";
+
 
 async function AccountDashboard({ accountId }: { accountId: string }) {
   const account = await db.query.awsAccounts.findFirst({
