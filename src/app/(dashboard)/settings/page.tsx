@@ -28,13 +28,13 @@ export default function SettingsPage() {
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Región AWS</span>
               <span className="font-mono">
-                {process.env.AWS_REGION || "us-east-1"}
+                {process.env.AWS_REGION || process.env.ADMIN_AWS_REGION || "us-east-1"}
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Usuario AWS</span>
               <span className="font-mono text-xs">
-                {process.env.AWS_USERNAME || "—"}
+                {process.env.AWS_USERNAME || process.env.ADMIN_AWS_USERNAME || "—"}
               </span>
             </div>
             <div className="flex justify-between text-sm">

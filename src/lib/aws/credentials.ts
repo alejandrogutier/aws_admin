@@ -19,13 +19,14 @@ type CachedCredential = {
 const credentialCache = new Map<string, CachedCredential>();
 
 function getPrimaryCredentials(): AwsCredentialIdentity & { region: string } {
-  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-  const region = process.env.AWS_REGION || "us-east-1";
+  // Support both AWS_* (local) and ADMIN_AWS_* (Amplify, where AWS_ prefix is reserved)
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID || process.env.ADMIN_AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || process.env.ADMIN_AWS_SECRET_ACCESS_KEY;
+  const region = process.env.AWS_REGION || process.env.ADMIN_AWS_REGION || "us-east-1";
 
   if (!accessKeyId || !secretAccessKey) {
     throw new Error(
-      "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be set in environment variables"
+      "AWS credentials must be set (AWS_ACCESS_KEY_ID or ADMIN_AWS_ACCESS_KEY_ID)"
     );
   }
 

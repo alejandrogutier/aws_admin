@@ -39,13 +39,18 @@ export async function getActiveAccounts(): Promise<AccountInfo[]> {
   }
 
   // Fallback: use env vars as virtual primary account
-  if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+  // Support both AWS_* (local) and ADMIN_AWS_* (Amplify, where AWS_ prefix is reserved)
+  const hasCredentials =
+    (process.env.AWS_ACCESS_KEY_ID || process.env.ADMIN_AWS_ACCESS_KEY_ID) &&
+    (process.env.AWS_SECRET_ACCESS_KEY || process.env.ADMIN_AWS_SECRET_ACCESS_KEY);
+
+  if (hasCredentials) {
     return [
       {
         id: ENV_ACCOUNT_ID,
-        name: process.env.AWS_USERNAME || "Cuenta Principal",
-        region: process.env.AWS_REGION || "us-east-1",
-        status: "active",
+        name: process.env.AWS_USERNAME || process.env.ADMIN_AWS_USERNAME || "Cuenta Principal",
+        region: process.env.AWS_REGION || process.env.ADMIN_AWS_REGION || "us-east-1",
+        status: "active" as const,
         isPrimary: true,
       },
     ];
