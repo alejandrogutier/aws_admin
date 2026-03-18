@@ -18,15 +18,17 @@ type CachedCredential = {
 
 const credentialCache = new Map<string, CachedCredential>();
 
+// Import generated config (baked at build time in Amplify, reads env locally)
+import { AWS_CONFIG } from "@/lib/aws-config.generated";
+
 function getPrimaryCredentials(): AwsCredentialIdentity & { region: string } {
-  // Support both AWS_* (local) and ADMIN_AWS_* (Amplify, where AWS_ prefix is reserved)
-  const accessKeyId = process.env.AWS_ACCESS_KEY_ID || process.env.ADMIN_AWS_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || process.env.ADMIN_AWS_SECRET_ACCESS_KEY;
-  const region = process.env.AWS_REGION || process.env.ADMIN_AWS_REGION || "us-east-1";
+  const accessKeyId = AWS_CONFIG.accessKeyId;
+  const secretAccessKey = AWS_CONFIG.secretAccessKey;
+  const region = AWS_CONFIG.region;
 
   if (!accessKeyId || !secretAccessKey) {
     throw new Error(
-      "AWS credentials must be set (AWS_ACCESS_KEY_ID or ADMIN_AWS_ACCESS_KEY_ID)"
+      "AWS credentials not configured. Set AWS_ACCESS_KEY_ID in .env or ADMIN_AWS_* in Amplify."
     );
   }
 

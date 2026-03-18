@@ -38,18 +38,15 @@ export async function getActiveAccounts(): Promise<AccountInfo[]> {
     // DB not available — fall through to env fallback
   }
 
-  // Fallback: use env vars as virtual primary account
-  // Support both AWS_* (local) and ADMIN_AWS_* (Amplify, where AWS_ prefix is reserved)
-  const hasCredentials =
-    (process.env.AWS_ACCESS_KEY_ID || process.env.ADMIN_AWS_ACCESS_KEY_ID) &&
-    (process.env.AWS_SECRET_ACCESS_KEY || process.env.ADMIN_AWS_SECRET_ACCESS_KEY);
+  // Fallback: use env/generated config as virtual primary account
+  const { AWS_CONFIG } = await import("@/lib/aws-config.generated");
 
-  if (hasCredentials) {
+  if (AWS_CONFIG.accessKeyId && AWS_CONFIG.secretAccessKey) {
     return [
       {
         id: ENV_ACCOUNT_ID,
-        name: process.env.AWS_USERNAME || process.env.ADMIN_AWS_USERNAME || "Cuenta Principal",
-        region: process.env.AWS_REGION || process.env.ADMIN_AWS_REGION || "us-east-1",
+        name: AWS_CONFIG.username || "Cuenta Principal",
+        region: AWS_CONFIG.region,
         status: "active" as const,
         isPrimary: true,
       },

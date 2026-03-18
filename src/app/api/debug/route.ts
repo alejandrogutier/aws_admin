@@ -1,23 +1,16 @@
 import { NextResponse } from "next/server";
+import { AWS_CONFIG } from "@/lib/aws-config.generated";
 
 export async function GET() {
   return NextResponse.json({
-    // Only show which vars exist (not values) for security
-    envCheck: {
-      AWS_REGION: !!process.env.AWS_REGION,
-      AWS_ACCESS_KEY_ID: !!process.env.AWS_ACCESS_KEY_ID,
-      AWS_SECRET_ACCESS_KEY: !!process.env.AWS_SECRET_ACCESS_KEY,
-      AWS_USERNAME: !!process.env.AWS_USERNAME,
-      ADMIN_AWS_REGION: !!process.env.ADMIN_AWS_REGION,
-      ADMIN_AWS_ACCESS_KEY_ID: !!process.env.ADMIN_AWS_ACCESS_KEY_ID,
-      ADMIN_AWS_SECRET_ACCESS_KEY: !!process.env.ADMIN_AWS_SECRET_ACCESS_KEY,
-      ADMIN_AWS_USERNAME: !!process.env.ADMIN_AWS_USERNAME,
-    },
-    resolved: {
-      region: process.env.AWS_REGION || process.env.ADMIN_AWS_REGION || "NOT_SET",
-      hasAccessKey: !!(process.env.AWS_ACCESS_KEY_ID || process.env.ADMIN_AWS_ACCESS_KEY_ID),
-      hasSecretKey: !!(process.env.AWS_SECRET_ACCESS_KEY || process.env.ADMIN_AWS_SECRET_ACCESS_KEY),
-      username: process.env.AWS_USERNAME || process.env.ADMIN_AWS_USERNAME || "NOT_SET",
+    configCheck: {
+      hasRegion: !!AWS_CONFIG.region,
+      hasAccessKey: !!AWS_CONFIG.accessKeyId,
+      hasSecretKey: !!AWS_CONFIG.secretAccessKey,
+      hasUsername: !!AWS_CONFIG.username,
+      region: AWS_CONFIG.region,
+      // Show first 4 chars of access key for verification (safe)
+      accessKeyPrefix: AWS_CONFIG.accessKeyId ? AWS_CONFIG.accessKeyId.substring(0, 4) + "..." : "NOT_SET",
     },
   });
 }

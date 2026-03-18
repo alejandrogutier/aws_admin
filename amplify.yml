@@ -4,20 +4,23 @@ frontend:
     preBuild:
       commands:
         - npm ci
-        # Write Amplify env vars to .env.production.local for Next.js SSR runtime
+        # Generate server-only config file with AWS credentials at build time.
+        # Amplify env vars are NOT available in the SSR Lambda runtime,
+        # so we bake them into a TypeScript module that only server code imports.
         - |
-          echo "ADMIN_AWS_REGION=$ADMIN_AWS_REGION" > .env.production.local
-          echo "ADMIN_AWS_ACCESS_KEY_ID=$ADMIN_AWS_ACCESS_KEY_ID" >> .env.production.local
-          echo "ADMIN_AWS_SECRET_ACCESS_KEY=$ADMIN_AWS_SECRET_ACCESS_KEY" >> .env.production.local
-          echo "ADMIN_AWS_USERNAME=$ADMIN_AWS_USERNAME" >> .env.production.local
-          cat .env.production.local
+          cat > src/lib/aws-config.generated.ts << CONFIGEOF
+          import "server-only";
+          export const AWS_CONFIG = {
+            region: "${ADMIN_AWS_REGION:-us-east-1}",
+            accessKeyId: "${ADMIN_AWS_ACCESS_KEY_ID:-}",
+            secretAccessKey: "${ADMIN_AWS_SECRET_ACCESS_KEY:-}",
+            username: "${ADMIN_AWS_USERNAME:-}",
+          } as const;
+          CONFIGEOF
+          echo "Generated aws-config with region=${ADMIN_AWS_REGION}"
     build:
       commands:
         - npm run build
-        # Copy env file into standalone directory so it's available at runtime
-        - cp .env.production.local .next/standalone/.env.production.local 2>/dev/null || true
-        - cp .env.production.local .next/standalone/.env.local 2>/dev/null || true
-        - cp .env.production.local .next/.env.production.local 2>/dev/null || true
   artifacts:
     baseDirectory: .next
     files:
