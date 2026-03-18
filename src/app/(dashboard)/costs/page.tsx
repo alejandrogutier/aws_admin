@@ -1,8 +1,6 @@
 import { Suspense } from "react";
-import { db } from "@/lib/db";
-import { awsAccounts } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import { format, subMonths } from "date-fns";
+import { getFilteredAccounts } from "@/lib/accounts";
 import { getCostByService, getMonthlyCosts, getDailyCosts } from "@/lib/aws/costs";
 import { CostFilters } from "@/components/costs/cost-filters";
 import { CostByServiceChart } from "@/components/dashboard/cost-by-service-chart";
@@ -31,29 +29,7 @@ async function CostsContent({
   const endDate = searchParams.endDate || format(now, "yyyy-MM-dd");
   const accountId = searchParams.accountId;
 
-  let accounts: { id: string; name: string }[] = [];
-  try {
-    if (accountId) {
-      const account = await db.query.awsAccounts.findFirst({
-        where: eq(awsAccounts.id, accountId),
-        columns: { id: true, name: true },
-      });
-      if (account) accounts = [account];
-    } else {
-      accounts = await db
-        .select({ id: awsAccounts.id, name: awsAccounts.name })
-        .from(awsAccounts)
-        .where(eq(awsAccounts.status, "active"));
-    }
-  } catch {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          No se pudo conectar a la base de datos
-        </CardContent>
-      </Card>
-    );
-  }
+  const accounts = await getFilteredAccounts(accountId);
 
   if (accounts.length === 0) {
     return (

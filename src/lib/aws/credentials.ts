@@ -87,6 +87,18 @@ async function assumeRole(
 export async function getAccountCredentials(
   accountId: string
 ): Promise<{ credentials: AwsCredentialIdentity; region: string }> {
+  // Virtual env account — use env vars directly
+  if (accountId === "env-primary") {
+    const primary = getPrimaryCredentials();
+    return {
+      credentials: {
+        accessKeyId: primary.accessKeyId,
+        secretAccessKey: primary.secretAccessKey,
+      },
+      region: primary.region,
+    };
+  }
+
   // Check cache first
   const cached = credentialCache.get(accountId);
   if (cached && isCacheValid(cached)) {

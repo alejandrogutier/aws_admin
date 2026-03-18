@@ -4,9 +4,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Header } from "@/components/layout/header";
 import { requireAuth } from "@/lib/auth/session";
-import { db } from "@/lib/db";
-import { awsAccounts } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveAccounts } from "@/lib/accounts";
 
 export default async function DashboardLayout({
   children,
@@ -15,21 +13,7 @@ export default async function DashboardLayout({
 }) {
   await requireAuth();
 
-  let accounts: Pick<import("@/types/aws").AwsAccount, "id" | "name" | "region" | "status">[] = [];
-  try {
-    const rows = await db
-      .select({
-        id: awsAccounts.id,
-        name: awsAccounts.name,
-        region: awsAccounts.region,
-        status: awsAccounts.status,
-      })
-      .from(awsAccounts)
-      .where(eq(awsAccounts.status, "active"));
-    accounts = rows as typeof accounts;
-  } catch {
-    // DB not available yet — continue with empty accounts
-  }
+  const accounts = await getActiveAccounts();
 
   return (
     <SidebarProvider>

@@ -1,7 +1,5 @@
 import { Suspense } from "react";
-import { db } from "@/lib/db";
-import { awsAccounts } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { getFilteredAccounts } from "@/lib/accounts";
 import { listUsers } from "@/lib/aws/iam";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,29 +19,7 @@ async function UsersContent({
 }: {
   accountId: string | undefined;
 }) {
-  let accounts: { id: string; name: string }[] = [];
-  try {
-    if (accountId) {
-      const account = await db.query.awsAccounts.findFirst({
-        where: eq(awsAccounts.id, accountId),
-        columns: { id: true, name: true },
-      });
-      if (account) accounts = [account];
-    } else {
-      accounts = await db
-        .select({ id: awsAccounts.id, name: awsAccounts.name })
-        .from(awsAccounts)
-        .where(eq(awsAccounts.status, "active"));
-    }
-  } catch {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          No se pudo conectar a la base de datos
-        </CardContent>
-      </Card>
-    );
-  }
+  const accounts = await getFilteredAccounts(accountId);
 
   const allUsers: IamUser[] = [];
 

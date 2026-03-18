@@ -1,8 +1,6 @@
 import { Suspense } from "react";
-import { db } from "@/lib/db";
-import { awsAccounts } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import { format, subMonths } from "date-fns";
+import { getActiveAccounts } from "@/lib/accounts";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { CostTrendChart } from "@/components/dashboard/cost-trend-chart";
 import { CostByServiceChart } from "@/components/dashboard/cost-by-service-chart";
@@ -33,15 +31,7 @@ function DashboardSkeleton() {
 }
 
 async function DashboardContent() {
-  let accounts: { id: string; name: string }[] = [];
-  try {
-    accounts = await db
-      .select({ id: awsAccounts.id, name: awsAccounts.name })
-      .from(awsAccounts)
-      .where(eq(awsAccounts.status, "active"));
-  } catch {
-    // DB not available
-  }
+  const accounts = await getActiveAccounts();
 
   if (accounts.length === 0) {
     return (
