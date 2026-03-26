@@ -13,10 +13,25 @@ type AccountInfo = {
 const ENV_ACCOUNT_ID = "env-primary";
 
 /**
- * Returns all active accounts. Falls back to env-var primary account
- * if the database is not available or has no accounts configured.
+ * Returns all active accounts. Always includes the env-var primary account
+ * first (if configured), plus any additional accounts from the database.
  */
 export async function getActiveAccounts(): Promise<AccountInfo[]> {
+  const accounts: AccountInfo[] = [];
+
+  // Siempre incluir la cuenta primaria del .env si está configurada
+  const { AWS_CONFIG } = await import("@/lib/aws-config.generated");
+  if (AWS_CONFIG.accessKeyId && AWS_CONFIG.secretAccessKey) {
+    accounts.push({
+      id: ENV_ACCOUNT_ID,
+      name: AWS_CONFIG.username || "Cuenta Principal",
+      region: AWS_CONFIG.region,
+      status: "active" as const,
+      isPrimary: true,
+    });
+  }
+
+  // Agregar cuentas adicionales de la DB (cross-account)
   try {
     const { db } = await import("@/lib/db");
     const { awsAccounts } = await import("@/lib/db/schema");
@@ -33,27 +48,16 @@ export async function getActiveAccounts(): Promise<AccountInfo[]> {
       .from(awsAccounts)
       .where(eq(awsAccounts.status, "active"));
 
-    if (rows.length > 0) return rows as AccountInfo[];
+    // Excluir cuentas primarias sin roleArn (duplicarían la del env)
+    for (const row of rows) {
+      if (row.isPrimary) continue;
+      accounts.push(row as AccountInfo);
+    }
   } catch {
-    // DB not available — fall through to env fallback
+    // DB not available — solo mostramos la cuenta del env
   }
 
-  // Fallback: use env/generated config as virtual primary account
-  const { AWS_CONFIG } = await import("@/lib/aws-config.generated");
-
-  if (AWS_CONFIG.accessKeyId && AWS_CONFIG.secretAccessKey) {
-    return [
-      {
-        id: ENV_ACCOUNT_ID,
-        name: AWS_CONFIG.username || "Cuenta Principal",
-        region: AWS_CONFIG.region,
-        status: "active" as const,
-        isPrimary: true,
-      },
-    ];
-  }
-
-  return [];
+  return accounts;
 }
 
 /**

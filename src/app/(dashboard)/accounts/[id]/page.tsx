@@ -15,13 +15,50 @@ import * as lambdaLib from "@/lib/aws/lambda";
 import * as rdsLib from "@/lib/aws/rds";
 import * as s3Lib from "@/lib/aws/s3";
 import * as iamLib from "@/lib/aws/iam";
-import { MapPin, Clock } from "lucide-react";
+import { AWS_CONFIG } from "@/lib/aws-config.generated";
+import { MapPin, Clock, Key } from "lucide-react";
 
+type AccountInfo = {
+  id: string;
+  name: string;
+  region: string;
+  isPrimary: boolean;
+  lastConnectedAt: Date | null;
+  isEnvAccount?: boolean;
+};
+
+async function getAccountInfo(accountId: string): Promise<AccountInfo | null> {
+  if (accountId === "env-primary") {
+    if (!AWS_CONFIG.accessKeyId || !AWS_CONFIG.secretAccessKey) return null;
+    return {
+      id: "env-primary",
+      name: AWS_CONFIG.username || "Cuenta Principal",
+      region: AWS_CONFIG.region || "us-east-1",
+      isPrimary: true,
+      lastConnectedAt: null,
+      isEnvAccount: true,
+    };
+  }
+
+  try {
+    const dbAccount = await db.query.awsAccounts.findFirst({
+      where: eq(awsAccounts.id, accountId),
+    });
+    if (!dbAccount) return null;
+    return {
+      id: dbAccount.id,
+      name: dbAccount.name,
+      region: dbAccount.region,
+      isPrimary: dbAccount.isPrimary,
+      lastConnectedAt: dbAccount.lastConnectedAt,
+    };
+  } catch {
+    return null;
+  }
+}
 
 async function AccountDashboard({ accountId }: { accountId: string }) {
-  const account = await db.query.awsAccounts.findFirst({
-    where: eq(awsAccounts.id, accountId),
-  });
+  const account = await getAccountInfo(accountId);
 
   if (!account) notFound();
 
@@ -70,6 +107,12 @@ async function AccountDashboard({ accountId }: { accountId: string }) {
             </span>
             {account.isPrimary && (
               <Badge variant="secondary">Cuenta Primaria</Badge>
+            )}
+            {account.isEnvAccount && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Key className="h-3 w-3" />
+                Configurada vía .env
+              </span>
             )}
             {account.lastConnectedAt && (
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
