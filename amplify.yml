@@ -4,20 +4,58 @@ frontend:
     preBuild:
       commands:
         - npm ci
-        # Generate server-only config file with AWS credentials at build time.
-        # Amplify env vars are NOT available in the SSR Lambda runtime,
-        # so we bake them into a TypeScript module that only server code imports.
+        # Warn loudly when auth is not configured. Missing Cognito vars are what
+        # caused INC1758541: the dashboard fell back to an open "development
+        # mode" and served AWS data to anonymous visitors.
+        #
+        # This does NOT fail the build: the app now fails closed on its own, so
+        # a deployment without Cognito is locked down rather than exposed, and
+        # blocking here would only keep a vulnerable build live in production.
         - |
-          cat > src/lib/aws-config.generated.ts << CONFIGEOF
-          import "server-only";
-          export const AWS_CONFIG = {
-            region: "${ADMIN_AWS_REGION:-us-east-1}",
-            accessKeyId: "${ADMIN_AWS_ACCESS_KEY_ID:-}",
-            secretAccessKey: "${ADMIN_AWS_SECRET_ACCESS_KEY:-}",
-            username: "${ADMIN_AWS_USERNAME:-}",
-          } as const;
-          CONFIGEOF
-          echo "Generated aws-config with region=${ADMIN_AWS_REGION}"
+          if [ -z "$COGNITO_USER_POOL_ID" ] || [ -z "$COGNITO_CLIENT_ID" ]; then
+            echo "=============================================================="
+            echo "WARNING: COGNITO_USER_POOL_ID / COGNITO_CLIENT_ID are not set."
+            echo "The app will fail closed: every route returns 401 or redirects"
+            echo "to /login, and NO USER WILL BE ABLE TO SIGN IN."
+            echo "Configure Cognito in the Amplify environment to restore access."
+            echo "=============================================================="
+          fi
+        # Generate a server-only config module with the values the SSR runtime
+        # needs. Amplify env vars are NOT available in the SSR Lambda runtime,
+        # so secrets are baked into a module only server code can import
+        # ("server-only" turns any client import into a build error).
+        #
+        # Written via node so values containing quotes, backslashes or $ are
+        # escaped correctly by JSON.stringify.
+        - |
+          node -e '
+            const fs = require("fs");
+            const e = process.env;
+            const cfg = {
+              region: e.ADMIN_AWS_REGION || "us-east-1",
+              accessKeyId: e.ADMIN_AWS_ACCESS_KEY_ID || "",
+              secretAccessKey: e.ADMIN_AWS_SECRET_ACCESS_KEY || "",
+              username: e.ADMIN_AWS_USERNAME || "",
+            };
+            const secrets = {
+              cognitoClientSecret: e.COGNITO_CLIENT_SECRET || "",
+              databaseUrl: e.DATABASE_URL || "",
+            };
+            const lines = [
+              "import \"server-only\";",
+              "// AUTO-GENERATED during the Amplify build. Do not edit by hand.",
+              "export const AWS_CONFIG = " + JSON.stringify(cfg, null, 2) + " as const;",
+              "export const RUNTIME_SECRETS = " + JSON.stringify(secrets, null, 2) + " as const;",
+              "",
+            ];
+            fs.writeFileSync("src/lib/aws-config.generated.ts", lines.join("\n"));
+            console.log(
+              "Generated aws-config: region=" + cfg.region +
+              " awsKey=" + (cfg.accessKeyId ? "set" : "MISSING") +
+              " db=" + (secrets.databaseUrl ? "set" : "MISSING") +
+              " cognitoSecret=" + (secrets.cognitoClientSecret ? "set" : "MISSING")
+            );
+          '
     build:
       commands:
         - npm run build

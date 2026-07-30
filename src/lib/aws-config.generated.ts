@@ -7,3 +7,9 @@ export const AWS_CONFIG = {
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || process.env.ADMIN_AWS_SECRET_ACCESS_KEY || "",
   username: process.env.AWS_USERNAME || process.env.ADMIN_AWS_USERNAME || "",
 } as const;
+
+// Secrets the SSR runtime needs that are not safe to inline via next.config.ts.
+export const RUNTIME_SECRETS = {
+  cognitoClientSecret: process.env.COGNITO_CLIENT_SECRET || "",
+  databaseUrl: process.env.DATABASE_URL || "",
+} as const;

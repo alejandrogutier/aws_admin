@@ -1,13 +1,20 @@
 import "server-only";
 
-const COGNITO_DOMAIN = process.env.COGNITO_DOMAIN!;
-const COGNITO_CLIENT_ID = process.env.COGNITO_CLIENT_ID!;
-const COGNITO_CLIENT_SECRET = process.env.COGNITO_CLIENT_SECRET!;
+import { RUNTIME_SECRETS } from "@/lib/aws-config.generated";
+
+const COGNITO_DOMAIN = process.env.COGNITO_DOMAIN || "";
+const COGNITO_CLIENT_ID = process.env.COGNITO_CLIENT_ID || "";
+// Not inlined via next.config.ts — baked into the server-only module instead.
+const COGNITO_CLIENT_SECRET =
+  process.env.COGNITO_CLIENT_SECRET || RUNTIME_SECRETS.cognitoClientSecret;
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
 const REDIRECT_URI = `${APP_URL}/api/auth/callback`;
 
-export function getLoginUrl() {
+/** Returns null when Cognito is not configured, so callers can say so plainly. */
+export function getLoginUrl(): string | null {
+  if (!COGNITO_DOMAIN || !COGNITO_CLIENT_ID) return null;
+
   const params = new URLSearchParams({
     response_type: "code",
     client_id: COGNITO_CLIENT_ID,
@@ -17,7 +24,9 @@ export function getLoginUrl() {
   return `https://${COGNITO_DOMAIN}/login?${params.toString()}`;
 }
 
-export function getLogoutUrl() {
+export function getLogoutUrl(): string | null {
+  if (!COGNITO_DOMAIN || !COGNITO_CLIENT_ID) return null;
+
   const params = new URLSearchParams({
     client_id: COGNITO_CLIENT_ID,
     logout_uri: APP_URL,

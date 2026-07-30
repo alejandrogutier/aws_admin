@@ -22,12 +22,19 @@ export default async function LoginPage() {
             Administración y monitoreo multi-cuenta de AWS
           </p>
         </div>
-        <a
-          href={loginUrl}
-          className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Iniciar sesión con AWS Cognito
-        </a>
+        {loginUrl ? (
+          <a
+            href={loginUrl}
+            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Iniciar sesión con AWS Cognito
+          </a>
+        ) : (
+          <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
+            La autenticación no está configurada en este entorno. El acceso
+            permanece bloqueado hasta que se definan las variables de Cognito.
+          </p>
+        )}
       </div>
     </div>
   );
